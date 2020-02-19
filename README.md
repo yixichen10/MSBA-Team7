@@ -1,37 +1,25 @@
-## Welcome to GitHub Pages
+# Welcome!
 
-You can use the [editor on GitHub](https://github.com/yixichen10/MSBA-Team7/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+Greetings from Yixi, Kelby, Carlos, and Scott Mundy. We are Team 7 from William&Mary's MSBA program, Class 2020. This is a website to showcase some of our group projects in Spring Semester.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
+## Machine Learning II
 ```markdown
-Syntax highlighted code block
+### Presentation 1: Mid-Term Review Session
 
-# Header 1
-## Header 2
-### Header 3
+Chapter 6 Linear Model Selection and Regularization, Exercise 10<br>
+Chapter 7 Moving Beyond Linearity, Exercise 11<br>
+Chapter 8 Tree-Based Methods, Exercise 11, page 335<br>
+[View HTML](TA1.html)<br>
+[Download R Markdown File](TA1.Rmd)<br>
 
-- Bulleted
-- List
 
-1. Numbered
-2. List
+### Presentation 2: Final Project
 
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+Kaggle case: [PetFinder.my Adoption Prediction](https://www.kaggle.com/c/petfinder-adoption-prediction)
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
 
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/yixichen10/MSBA-Team7/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+## Data Visualization
+```markdown
+Our visualization deconstruction project will be shown here later.
+```
