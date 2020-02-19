@@ -9,6 +9,7 @@ Greetings from Yixi, Kelby, Carlos, and Scott Mundy. We are Team 7 from William&
 Chapter 6 Linear Model Selection and Regularization, Exercise 10<br>
 Chapter 7 Moving Beyond Linearity, Exercise 11<br>
 Chapter 8 Tree-Based Methods, Exercise 11, page 335<br>
+
 [View HTML](TA1.html)<br>
 [Download R Markdown File](TA1.Rmd)<br>
 
