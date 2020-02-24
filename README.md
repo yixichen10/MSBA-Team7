@@ -11,7 +11,7 @@ We will cover the following exercise questions from ISLR:<br>
 - Chapter 8 Tree-Based Methods, Exercise 11, page 335<br>
 
 Please follow along:)<br>
-[View HTML](https://yixichen10.github.io/MSBA-Team7/TA1)<br>
+[View HTML](https://yixichen10.github.io/MSBA-Team7/TA1.html)<br>
 [Download R Markdown File](TA1.Rmd)<br>
 
 
