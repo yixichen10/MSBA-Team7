@@ -1,0 +1,409 @@
+---
+title: "Mid-Term Review Session"
+author: "Team 7 - Yixi Chen, Kelby Williamson, Carlos Garrido, Scott Mundy"
+date: "3/2/2020"
+output: rmdformats::readthedown
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Chapter 6, Exercise 10
+
+We have seen that as the number of features used in a model increases, the training error will necessarily decrease, but the test error may not. We will now explore this in a simulated data set.
+
+```{r, warning=FALSE}
+rm(list=ls())
+
+set.seed(8)
+# leaps has the regsubsets() method
+library(leaps)
+
+```
+
+## Question (a)
+#### Generate a data set with p = 20 features, n = 1000 observations and an associated quantitative response vector generated according to the model $Y=X \beta + \epsilon$, where $\beta$ has some elements that are exactly equal to zero.
+
+```{r}
+# generate dataset of 20 features with 1000 observations
+p <- 20
+n <- 1000
+
+# just use rnorm to generate everything
+data <- matrix(rnorm(n*p), n, p)
+
+# Generate Betas, then manually set several to zero
+Beta <- rnorm(p)
+Beta[2] <- 0
+Beta[4] <- 0
+Beta[6] <- 0
+
+# epsilon we can also generate with rnorm
+eps <- rnorm(p)
+
+# %*% is for matrix multiplication here we have a 1000 x 20 * a 20 x 1 
+Y <- data%*%Beta + eps
+```
+
+<br>
+
+## Question (b)
+#### Split your data set into a training set containing 100 observations and a test set containing 900 observations. 
+
+```{r}
+indices <- sample(seq(1000), 100)
+train_x <- data[indices,]
+# - sign in an index excludes those indices in R
+test_x <- data[-indices,]
+
+train_y <- Y[indices]
+test_y <- Y[-indices]
+```
+
+<br>
+
+## Question (c)
+#### Perform best subset selection on the training set, plot the training set MSE associated with the best model of each size.
+
+```{r}
+# want to use regsubsets function to predict Y as a function of the data
+# need to make a dataframe
+df <- data.frame(x = train_x, y = train_y)
+# also takes nvmax argument which determines the maximum number of variables that it can put in a subset
+regfit_full <- regsubsets(y~., data = df, nvmax = p)
+val.errors <- rep(NA,p)
+x_names <- colnames(train_x, do.NULL = FALSE, prefix = "x.")
+for( i in 1:p){
+  coefi = coef(regfit_full, id = i)
+  # this is subset selection. The indices of the coeficients are random so we must reference them
+  # by name. %in% checks for membership in a vector in R.
+  pred <- as.matrix(train_x[, x_names %in% names(coefi)]) %*% coefi[names(coefi) %in% x_names]
+  val.errors[i] <- mean((train_y - pred)^2)
+}
+
+plot(val.errors, ylab = "Training MSE", xlab = "Size of subset", type = 'b')
+```
+<br>
+
+## Question (d)
+#### Plot the test set MSE associated with the best model of each size.
+
+```{r}
+# essentially the same thing as c). but using the test set
+val.errors2 <- rep(NA,p)
+
+for( i in 1:p){
+  coefi = coef(regfit_full, id = i)
+  # We took the names of the x variables and predict using the ones 
+  # %in% the subset of i X variables.
+  pred <- as.matrix(test_x[, x_names %in% names(coefi)]) %*% coefi[names(coefi) %in% x_names]
+  val.errors2[i] <- mean((test_y - pred)^2)
+}
+
+plot(val.errors2, ylab = "Test MSE", xlab = "Size of subset", type = 'b')
+```
+
+
+<br>
+
+## Question (e)
+#### For which model size does the test set MSE take on its minimum value? Comment on your results. If it takes on its minimum value for a model containing only an intercept or a model containing all of the features, then play around with the way that you are generating the data in (a) until you come up with a scenario in which the test MSE is minimized for an intermediate model size.
+
+```{r}
+which.min(val.errors2)
+```
+The test mse is smallest with a subset size of 14.
+
+<br>
+
+## Question (f)
+#### How does the model at which the test set MSE is minimized compare to the true model used to generate the data? Comment on the coefficient values.
+
+```{r}
+coef(regfit_full, id = 16)
+```
+We set the coeficients at x2, x4, and x6 to zero x2, and x6 are absent meaning the model correctly caught that they were zero, however it did assign a weight to x4 which means it missed one of the three meaningful coefficients, given that all the rest are totally random.
+
+
+
+<br>
+
+## Question (g)
+#### Create a plot displaying $\sqrt{\sum_{j=1}^p (\beta_j - \hat{\beta_j^r})^2}$ for a range of values of r, where $\hat{\beta^r_j}$ is the jth coefficient estimate for the best model containing r coefficients. Comment on what you observe. How does this compare to the test MSE plot from (d)?
+
+```{r}
+errors <- rep(NA, p)
+r <- 20
+
+
+for( i in 1:r) {
+  coefi = coef(regfit_full, id = i)
+  # Because the subsets are random, we can't expect numerical indices to match up
+  # so we need to check for membership with %in%. Also, because there are more actual Beta terms
+  # than coefficients for all r's other than 20, we need to also square the Beta's that aren't 
+  # included.
+  tot <- sum((Beta[x_names %in% names(coefi)]
+              - coefi[names(coefi) %in% x_names])^2)
+             + sum(Beta[!(x_names %in% names(coefi))]^2)
+  errors[i] <- sqrt(tot)
+  
+}
+
+plot(x = 1:20, y = errors, xlab = "number of coefficients",
+     ylab = "error between estimated and actual coefficients")
+
+which.min(errors)
+```
+
+<br>
+
+While this is not always the case, for this particular random seed we end up with the coefficient error being lowest at 2 coefficients. Other seeds can yield other values given that there is no actual pattern to the data. Using a seed of 42 for example had both the test MSE and coefficient error lowest at 16 coefficients. Essentially the only meaningful observation of this plot is that the cofficients are farthest away from the actual value when we have a subset of size 1.
+
+Ultimately, the point of the exercise is to illustrate that even for garbage data like this, you will see improvement in training error as you increase the flexibility of the model, however that does not mean that your model is actually improving. 
+
+
+<br>
+
+# Chapter 7, Exercise 11
+This question explores backfitting in the context of multiple linear regression. If you want to perform multiple linear regression, but only have the software to perform simple linear regression, we take the following approach: repeatedly hold all but one coefficient estimate fixed at its current value, and update only that coefficient estimate using a simple linear regression. This process is continued until convergence - until the coefficient estimates stop changing. 
+We are going to try this out on a toy example.  
+
+<br> 
+
+## Question (a)
+##### Generate a response Y and two predictors X1 and X2, with n=100.  
+
+```{r}
+# create variables according the equation Y=-2.1 + 1.3X1 + 0.54X2
+set.seed(1)
+X1 = rnorm(100)
+X2 = rnorm(100)
+eps = rnorm(100, sd = 0.1)
+Y = -2.1 + 1.3 * X1 + 0.54 * X2 + eps
+```
+<br>
+
+## Question (b)
+##### Initialize first of the β^1 to value of your choice. 
+
+```{r}
+# Create list of 1000 beta0, beta1, and beta2.
+beta0 = rep(NA, 1000)
+beta1 = rep(NA, 1000)
+beta2 = rep(NA, 1000)
+
+# Initialize first of β^1 to 10.
+beta1[1] = 10
+```
+<br>
+
+## Question (c)
+##### Keeping β^1 fixed, fit the model Y-β^1X1 = β0 + β2X2 + eps 
+
+```{r}
+a=Y-beta1[1]*X1
+beta2[1]=lm(a ~ X2)$coef[2]
+```
+<br>
+
+## Question (d)
+##### Keeping β^2 fixed, fit the model Y-β^2X2 = β0 + β1X1 + eps  
+
+```{r}
+a=Y-beta2[1]*X2
+beta1[2]=lm(a∼X1)$coef[2]
+```
+<br>
+
+## Question (e)
+##### Write a for loop to repeat (c) and (d) 1000 times. Report the estimates of β^0, β^1, and β^2 at each iteration of the for loop. Create a plot in which each of these values is displayed, with β^0, β^1, and β^2 each shown in a different color. 
+
+```{r}
+for (i in 1:1000) {
+    a = Y - beta1[i] * X1
+    beta2[i] = lm(a ~ X2)$coef[2]
+    a = Y - beta2[i] * X2
+    lm.fit = lm(a ~ X1)
+    if (i < 1000) {
+        beta1[i + 1] = lm.fit$coef[2]
+    }
+    beta0[i] = lm.fit$coef[1]
+}
+plot(1:1000, beta0, type = "l", xlab = "iteration", ylab = "betas", ylim = c(-2.2, 
+    1.6), col = "green")
+lines(1:1000, beta1, col = "red")
+lines(1:1000, beta2, col = "blue")
+legend("center", c("beta0", "beta1", "beta2"), lty = 1, col = c("green", "red", 
+    "blue"))
+```
+<br>
+
+## Question (f)
+##### Compare your answer in (e) to the results of simply performing multiple linear regression to predict Y using X1 and X2. Use the abline() function to overlay those multiple linear regression coefficient estimates on the plot obtained in (e). 
+
+```{r}
+lm.fit = lm(Y ~ X1 + X2)
+plot(1:1000, beta0, type = "l", xlab = "iteration", ylab = "betas", ylim = c(-2.2, 
+    1.6), col = "green")
+lines(1:1000, beta1, col = "red")
+lines(1:1000, beta2, col = "blue")
+abline(h = lm.fit$coef[1], lty = "dashed", lwd = 3, col = rgb(0, 0, 0, alpha = 0.4))
+abline(h = lm.fit$coef[2], lty = "dashed", lwd = 3, col = rgb(0, 0, 0, alpha = 0.4))
+abline(h = lm.fit$coef[3], lty = "dashed", lwd = 3, col = rgb(0, 0, 0, alpha = 0.4))
+legend("center", c("beta0", "beta1", "beta2", "multiple regression"), lty = c(1, 
+    1, 1, 2), col = c("green", "red", "blue", "black"))
+
+```
+<br> 
+
+## Question (g)
+##### On this data set, how many backfitting iterations were required in order to obtain a "good" approximation to the multiple regression coefficient estimates? 
+When the relationship between Y and X's is linear, one iteration is sufficient to attain a good approximation of true regression coefficients.  
+
+<br>
+
+# Chapter 8, Exercise 11
+
+This question uses the `Caravan` data set.
+Let's first take a look at the data set.
+```{r, message=FALSE}
+require(ISLR)
+dim(Caravan)
+```
+
+```{r eval=FALSE}
+?Caravan
+```
+
+```
+**Description**
+The data contains 5822 real customer records. Each record consists of 86 variables, containing sociodemographic data (variables 1-43) and product ownership (variables 44-86). The sociodemographic data is derived from zip codes. All customers living in areas with the same zip code have the same sociodemographic attributes. 
+Variable 86 (Purchase) indicates whether the customer purchased a caravan insurance policy.
+```
+<br>
+
+## Question (a)
+##### Create a training set consisting of the first 1,000 observations, and a test set consisting of the remaining observations.
+
+```{r}
+# Split Caravan into training and test sets
+training <- Caravan[1:1000,]
+test <- Caravan[1001:nrow(Caravan),]
+
+# Check the split
+dim(training)
+dim(test)
+```
+<br>
+
+## Question (b)
+##### Fit a boosting model to the training set with `Purchase` as the response and the other variables as predictors. Use 1,000 trees, and a shrinkage value of 0.01. Which predictors appear to be the most important?
+
+```{r, warning=FALSE, message=FALSE}
+# Display the values of training$Purchase
+levels(training$Purchase)
+
+# Encode the string values of Purchase to 0/1
+training$Purchase <- ifelse(training$Purchase=="Yes",1,0)
+
+# Fit a boosting model using gbm()
+require(gbm)
+set.seed(342)
+boost.caravan <- gbm(Purchase~., data = training, n.trees = 1000, shrinkage = 0.01,
+                     distribution = 'bernoulli')
+```
+**Key takeaways:**<br>
+1. String values of the response variable should be converted to numerical in order to be passed to `gbm()`, otherwise there would be an error message: `Bernoulli requires the response to be in {0,1}`;<br>
+2. `distribution = 'bernoulli'` must be specified to indicate a classification problem with a binary `y`;<br>
+3. `as.factor()` should **NOT** be applied to `training$Purchase` after converting it to a 0/1 binary variable. Otherwise `gbm()` can work without error messages but return `NaN` values for feature importances.
+
+
+To display the top 5 important features, we can slice the `summary(boost.caravan)` as we do to a Data Frame.
+```{r}
+# plotit = FALSE can mute the plot of all features' importances
+summary(boost.caravan,plotit = FALSE)[1:5,]
+```
+<br>
+
+## Question (c)
+##### Use the boosting model to predict the response on the test data. Predict that a person will make a purchase if the estimated probability of purchase is greater than 20%. Form a confusion matrix. What fraction of the people predicted to make a purchase do in fact make one? How does this compare with the results obtained from applying KNN or logistic regression to this data set?.
+
+###### **c-1 Boosting** <br>
+```{r}
+# Make predictions of probabilities: seems that newdata does not require a 0/1 binary response variable
+pred_probs <- predict(object = boost.caravan, newdata = test, n.trees = 1000, type = 'response')
+
+# Convert to predictions of labels using a threshold of 20%
+pred_labels <- ifelse(pred_probs>0.2,"Yes","No")
+
+# Form a confusion matrix
+table(ActualValues=test$Purchase, Predictions=pred_labels)
+```
+**Key takeaways:**<br>
+1. `n.trees` must be specified when using `predict` on a `gbm` object;<br>
+2. To make predictions of probabilities, specify the argument `type = 'response'`; By default `predict` would return values on the log odds scale for `distribution = 'bernoulli'`;<br>
+3. Machine Learning 1 legacy: always put **actual** values **first** in the `table` function, which will appear as **row labels** later in the confusion matrix and specify names of rows and columns to make it clear.
+
+```{r}
+# Fraction of the people predicted to make a purchase do in fact make one -> What's the name of this value?
+34/(137+34)
+```
+<br>
+
+###### **c-2 KNN** <br>
+Now we fit a KNN model and compare its result to the boosting model.
+```{r, message=FALSE}
+require(class)
+# Scale the data set by excluding the last Purchase column
+scale.x <- as.data.frame(scale(Caravan[1:ncol(Caravan)-1]))
+training.scale.x <- scale.x[1:1000,]
+test.scale.x <- scale.x[1001:nrow(Caravan),]
+
+# Use the square root of training sample size as # of nearest neighbours in KNN
+(k <- round(sqrt(nrow(training))))
+
+# Fit a KNN model and make predictions
+knn.caravan <- knn(train = training.scale.x, test = test.scale.x, 
+                   cl=training$Purchase, k = k, prob = TRUE)
+## Extract the proportions of the votes for the winning class for each prediction
+knn.winning.prop <- attributes(knn.caravan)$prob
+## Convert the proportions to probabilities of predicting 1
+knn.probs <- ifelse(knn.caravan==1,knn.winning.prop,1-knn.winning.prop)
+## Convert to predictions of labels using a threshold of 20%
+knn.labels <- ifelse(knn.probs>0.2,"Yes","No")
+
+# Form a confusion matrix
+table(ActualValues=test$Purchase, Predictions=knn.labels)
+```
+**Key takeaways:**<br>
+1. Before fitting a KNN model, **scaling** must be done on the independent variables of the **whole** data set;<br>
+2. `knn()` will return the predicted labels directly. If specifying the argument `prob = TRUE`, the **proportion of the votes for the winning class** are returned as attribute `prob`. Still, this needs to be converted to the probability of predicting `1` or `Yes`;<br>
+
+Calculate the precision of the KNN model.
+```{r}
+17/(17+68)
+```
+The boosting model performs slightly better in terms of model precision.<br>
+
+
+###### **c-3 Logistic Regression** <br>
+Finally, fit a logistic regression model.
+```{r, warning=FALSE}
+# Convert the Purchase to a factor variable
+training$Purchase <- as.factor(training$Purchase)
+
+# Fit a logistic regression model
+glm.caravan <- glm(Purchase~., data = training, family = 'binomial')
+
+# Make predictions
+glm.probs <- predict(glm.caravan,newdata = test,type = 'response')
+glm.labels <- ifelse(glm.probs>0.2,"Yes","No")
+
+# Form a confusion matrix
+table(ActualValues=test$Purchase, Predictions=glm.labels)
+```
+Calculate the precision of the KNN model.
+```{r}
+58/(58+350)
+```
+Logistic regression performs much worse compared to Boosting and KNN in terms of precision.
