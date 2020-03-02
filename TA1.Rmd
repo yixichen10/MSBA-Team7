@@ -394,8 +394,8 @@ Calculate the precision of the KNN model.
 ```{r}
 17/(17+68)
 ```
-The boosting model performs slightly better in terms of model precision.<br>
-
+The KNN model performs slightly better in terms of model precision.<br>
+<br>
 
 ###### **c-3 Logistic Regression** <br>
 Finally, fit a logistic regression model.
