@@ -18,7 +18,7 @@ Please follow along:)<br>
 ### Presentation 2: Final Project
 
 Kaggle case: [PetFinder.my Adoption Prediction](https://www.kaggle.com/c/petfinder-adoption-prediction)<br>
-Our report: [Predictive Analysis on Pet Adoption Speed](https://yixichen10.github.io/MSBA-Team7/TA2)<br>
+Our report: [Predictive Analysis on Pet Adoption Speed](https://yixichen10.github.io/MSBA-Team7/TA2.html)<br>
 [Download R Markdown File](TA2.Rmd)<br>
 
 
